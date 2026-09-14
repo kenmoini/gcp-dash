@@ -84,7 +84,8 @@ def test_different_keys_load_concurrently():
     assert elapsed < 1.0
 
     release.set()
-    thread.join()
+    thread.join(timeout=5)
+    assert not thread.is_alive()
     assert cache.get("a", lambda: "x").value == "a"
 
 
@@ -101,6 +102,32 @@ def test_same_key_loads_once_under_contention():
     t2 = threading.Thread(target=cache.get, args=("k", loader))
     t1.start()
     t2.start()
-    t1.join()
-    t2.join()
+    t1.join(timeout=5)
+    t2.join(timeout=5)
+    assert not t1.is_alive()
+    assert not t2.is_alive()
     assert len(calls) == 1
+
+
+def test_invalidate_during_load_is_not_overwritten():
+    cache = TTLCache(60)
+    started = threading.Event()
+    release = threading.Event()
+
+    def loader():
+        started.set()
+        release.wait(timeout=5)
+        return "old"
+
+    thread = threading.Thread(target=cache.get, args=("k", loader))
+    thread.start()
+    assert started.wait(timeout=5)
+
+    cache.invalidate_all()
+    release.set()
+    thread.join(timeout=5)
+    assert not thread.is_alive()
+
+    # The in-flight load's stale "old" result must not have been written back.
+    # This get() must call the loader again and get the newest value.
+    assert cache.get("k", lambda: "new").value == "new"
