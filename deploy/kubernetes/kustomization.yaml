@@ -8,5 +8,5 @@ resources:
   - service.yaml
 images:
   - name: gcp-dash
-    newName: quay.io/kenmoini/gcp-dash   # change to your registry
-    newTag: latest
+    newName: ghcr.io/kenmoini/gcp-dash   # change to your registry
+    newTag: 9ec424a0dacef7d16a2615c69e2fe0d841879aaa
