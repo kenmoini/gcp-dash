@@ -1,0 +1,9 @@
+{% include "partials/gcp_error.html" %}
+{% if entry.value %}
+<dl>
+  <dt>Project ID</dt><dd>{{ entry.value.project_id }}</dd>
+  <dt>Name</dt><dd>{{ entry.value.display_name }}</dd>
+  <dt>Number</dt><dd>{{ entry.value.number }}</dd>
+  <dt>State</dt><dd>{{ entry.value.state }}</dd>
+</dl>
+{% endif %}

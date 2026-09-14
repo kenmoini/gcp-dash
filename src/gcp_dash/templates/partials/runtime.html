@@ -1,0 +1,23 @@
+<dl>
+  <dt>Hostname</dt><dd>{{ info.hostname }}</dd>
+  <dt>Container runtime</dt><dd>{{ info.runtime }}</dd>
+  <dt>Orchestrator</dt><dd>{{ info.orchestrator }}</dd>
+  {% if info.orchestrator == "kubernetes" %}
+  <dt>Pod</dt><dd>{{ info.pod.namespace or "?" }}/{{ info.pod.name or "?" }}</dd>
+  <dt>Node</dt><dd>{{ info.pod.node or "unknown" }}</dd>
+  <dt>Pod IP</dt><dd>{{ info.pod.ip or "unknown" }}</dd>
+  <dt>Service account</dt><dd>{{ info.pod.service_account or "unknown" }}</dd>
+  {% endif %}
+  <dt>OS</dt><dd>{{ info.os_release }}</dd>
+  <dt>Python</dt><dd>{{ info.python_version }}</dd>
+  <dt>UID / GID / PID</dt><dd>{{ info.uid }} / {{ info.gid }} / {{ info.pid }}</dd>
+  <dt>CPUs visible</dt><dd>{{ info.cpu_count }}</dd>
+  <dt>CPU limit</dt><dd>{{ info.cpu_limit if info.cpu_limit is not none else "unlimited" }}</dd>
+  <dt>Memory limit</dt><dd>{{ (info.memory_limit_bytes // 1048576) ~ " MiB" if info.memory_limit_bytes else "unlimited" }}</dd>
+  <dt>Memory usage</dt><dd>{{ (info.memory_usage_bytes // 1048576) ~ " MiB" if info.memory_usage_bytes else "unknown" }}</dd>
+  <dt>Load (1m)</dt><dd>{{ info.load_average_1m if info.load_average_1m is not none else "n/a" }}</dd>
+  <dt>Uptime</dt><dd>{{ state.uptime_seconds }} s</dd>
+  <dt>Liveness</dt><dd><span class="badge {{ 'ok' if state.live else 'bad' }}">{{ 'OK' if state.live else 'FAILING' }}</span></dd>
+  <dt>Readiness</dt><dd><span class="badge {{ 'ok' if state.ready else 'bad' }}">{{ 'OK' if state.ready else 'FAILING' }}</span></dd>
+  <dt>CPU load</dt><dd>{{ state.cpu_load.workers ~ " worker(s)" if state.cpu_load.active else "off" }}</dd>
+</dl>

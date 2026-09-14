@@ -3,12 +3,13 @@ from __future__ import annotations
 import threading
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from gcp_dash.config import Settings
 from gcp_dash.cpu_load import CpuLoad
 from gcp_dash.deps import get_cpu_load, get_runtime_state, get_settings
 from gcp_dash.state import RuntimeState
+from gcp_dash.templating import is_htmx, render_controls
 
 router = APIRouter(tags=["controls"])
 
@@ -41,6 +42,8 @@ def set_liveness(
     state: RuntimeState = Depends(get_runtime_state),
 ):
     state.set_live(enabled)
+    if is_htmx(request):
+        return render_controls(request)
     return JSONResponse(state_payload(request))
 
 
@@ -51,6 +54,8 @@ def set_readiness(
     state: RuntimeState = Depends(get_runtime_state),
 ):
     state.set_ready(enabled)
+    if is_htmx(request):
+        return render_controls(request)
     return JSONResponse(state_payload(request))
 
 
@@ -65,6 +70,8 @@ def crash(request: Request, exit_code: int = Form(..., ge=0, le=255)):
         exit_fn(exit_code)
 
     threading.Timer(CRASH_DELAY_SECONDS, _die).start()
+    if is_htmx(request):
+        return HTMLResponse(f"<span>Exiting with code {exit_code}…</span>", status_code=202)
     return JSONResponse(
         {"message": f"process will exit with code {exit_code} in {CRASH_DELAY_SECONDS}s",
          "exit_code": exit_code},
@@ -83,4 +90,6 @@ def set_cpu_load(
         cpu.start(workers)
     else:
         cpu.stop()
+    if is_htmx(request):
+        return render_controls(request)
     return JSONResponse(state_payload(request))

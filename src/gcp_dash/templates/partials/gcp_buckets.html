@@ -1,0 +1,9 @@
+{% include "partials/gcp_error.html" %}
+{% if entry.value is not none %}
+{% if entry.value %}
+<table><thead><tr><th>Name</th><th>Location</th><th>Class</th><th>Created</th></tr></thead>
+<tbody>{% for b in entry.value %}
+<tr><td>{{ b.name }}</td><td>{{ b.location }}</td><td>{{ b.storage_class }}</td><td>{{ b.created or "" }}</td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p class="muted">No buckets.</p>{% endif %}
+{% endif %}

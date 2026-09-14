@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Runtime · gcp-dash{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>Runtime <span class="muted">refreshes every 5s</span></h2>
+  <div hx-get="/partials/runtime" hx-trigger="load, every 5s" hx-swap="innerHTML">
+    {% include "partials/runtime.html" %}
+  </div>
+</section>
+<section class="card">
+  <h2>Controls</h2>
+  {% include "partials/controls.html" %}
+</section>
+{% endblock %}

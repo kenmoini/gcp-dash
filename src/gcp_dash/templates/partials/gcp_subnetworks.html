@@ -1,0 +1,9 @@
+{% include "partials/gcp_error.html" %}
+{% if entry.value is not none %}
+{% if entry.value %}
+<table><thead><tr><th>Name</th><th>Region</th><th>Network</th><th>CIDR</th><th>Private Google Access</th></tr></thead>
+<tbody>{% for s in entry.value %}
+<tr><td>{{ s.name }}</td><td>{{ s.region }}</td><td>{{ s.network }}</td><td>{{ s.cidr }}</td><td>{{ "yes" if s.private_google_access else "no" }}</td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p class="muted">No subnetworks.</p>{% endif %}
+{% endif %}

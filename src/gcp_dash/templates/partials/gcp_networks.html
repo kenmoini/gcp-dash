@@ -1,0 +1,9 @@
+{% include "partials/gcp_error.html" %}
+{% if entry.value is not none %}
+{% if entry.value %}
+<table><thead><tr><th>Name</th><th>Subnet mode</th><th>Subnets</th><th>Routing</th></tr></thead>
+<tbody>{% for n in entry.value %}
+<tr><td>{{ n.name }}</td><td>{{ "auto" if n.auto_subnets else "custom" }}</td><td>{{ n.subnet_count }}</td><td>{{ n.routing_mode }}</td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p class="muted">No networks.</p>{% endif %}
+{% endif %}

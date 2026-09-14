@@ -4,14 +4,16 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from gcp_dash.config import Settings
 from gcp_dash.cpu_load import CpuLoad
 from gcp_dash.gcp.cache import TTLCache
 from gcp_dash.gcp.provider import LiveGcpProvider
 from gcp_dash.gcp.service import GcpService
-from gcp_dash.routers import controls, gcp, health, runtime
+from gcp_dash.routers import controls, gcp, health, pages, runtime
 from gcp_dash.state import RuntimeState
+from gcp_dash.templating import STATIC_DIR
 
 
 def create_app(settings: Settings | None = None, *, gcp_provider=None) -> FastAPI:
@@ -37,6 +39,8 @@ def create_app(settings: Settings | None = None, *, gcp_provider=None) -> FastAP
     app.include_router(controls.router)
     app.include_router(runtime.router)
     app.include_router(gcp.router)
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+    app.include_router(pages.router)
     return app
 
 

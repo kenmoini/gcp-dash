@@ -1,0 +1,11 @@
+{% include "partials/gcp_error.html" %}
+{% if entry.value is not none %}
+{% if entry.value %}
+<table><thead><tr><th>Name</th><th>Zone</th><th>Type</th><th>Status</th><th>Internal IP</th><th>External IP</th></tr></thead>
+<tbody>{% for i in entry.value %}
+<tr><td>{{ i.name }}</td><td>{{ i.zone }}</td><td>{{ i.machine_type }}</td>
+<td><span class="badge {{ 'ok' if i.status == 'RUNNING' else 'bad' }}">{{ i.status }}</span></td>
+<td>{{ i.internal_ip or "" }}</td><td>{{ i.external_ip or "" }}</td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p class="muted">No instances.</p>{% endif %}
+{% endif %}

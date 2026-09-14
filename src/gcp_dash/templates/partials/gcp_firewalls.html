@@ -1,0 +1,11 @@
+{% include "partials/gcp_error.html" %}
+{% if entry.value is not none %}
+{% if entry.value %}
+<table><thead><tr><th>Name</th><th>Network</th><th>Direction</th><th>Priority</th><th>Action</th><th>Rules</th><th>Sources</th><th>Target tags</th></tr></thead>
+<tbody>{% for f in entry.value %}
+<tr><td>{{ f.name }}</td><td>{{ f.network }}</td><td>{{ f.direction }}</td><td>{{ f.priority }}</td>
+<td><span class="badge {{ 'ok' if f.action == 'allow' else 'bad' }}">{{ f.action }}</span></td>
+<td>{{ f.rules }}</td><td>{{ f.source_ranges | join(", ") }}</td><td>{{ f.target_tags | join(", ") }}</td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p class="muted">No firewall rules.</p>{% endif %}
+{% endif %}

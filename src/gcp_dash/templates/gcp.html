@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}GCP · gcp-dash{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>
+    Project: <code>{{ project_id or "not configured" }}</code>
+    <button hx-post="/api/gcp/refresh" hx-swap="none"
+            hx-on::after-request="document.querySelectorAll('[data-gcp-panel]').forEach(el => htmx.trigger(el, 'refresh'))">
+      Refresh all
+    </button>
+  </h2>
+  <p class="muted">Data is cached for {{ ttl }}s per resource type.</p>
+</section>
+{% for kind, title in panels %}
+<section class="card">
+  <h2>{{ title }} <span class="spinner muted">loading…</span></h2>
+  <div data-gcp-panel hx-get="/partials/gcp/{{ kind }}" hx-trigger="load, refresh" hx-swap="innerHTML">
+    <p class="muted">Loading…</p>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

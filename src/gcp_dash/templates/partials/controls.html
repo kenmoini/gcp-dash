@@ -1,0 +1,44 @@
+<div id="controls">
+{% if not state.controls_enabled %}
+  <p class="muted">Controls are disabled (CONTROLS_ENABLED=false).</p>
+{% else %}
+<div class="controls">
+  <div class="control">
+    <h3>Liveness probe <span class="badge {{ 'ok' if state.live else 'bad' }}">{{ 'OK' if state.live else 'FAILING' }}</span></h3>
+    <p class="muted">/healthz/live → {{ 200 if state.live else 503 }}. Kubernetes restarts the container after repeated failures.</p>
+    <button hx-post="/controls/liveness" hx-vals='{"enabled": {{ 'false' if state.live else 'true' }} }' hx-target="#controls" hx-swap="outerHTML">
+      {{ 'Disable' if state.live else 'Enable' }}
+    </button>
+  </div>
+  <div class="control">
+    <h3>Readiness probe <span class="badge {{ 'ok' if state.ready else 'bad' }}">{{ 'OK' if state.ready else 'FAILING' }}</span></h3>
+    <p class="muted">/healthz/ready → {{ 200 if state.ready else 503 }}. Kubernetes removes the pod from Service endpoints.</p>
+    <button hx-post="/controls/readiness" hx-vals='{"enabled": {{ 'false' if state.ready else 'true' }} }' hx-target="#controls" hx-swap="outerHTML">
+      {{ 'Disable' if state.ready else 'Enable' }}
+    </button>
+  </div>
+  <div class="control">
+    <h3>CPU load <span class="badge {{ 'bad' if state.cpu_load.active else 'ok' }}">{{ state.cpu_load.workers ~ ' worker(s)' if state.cpu_load.active else 'off' }}</span></h3>
+    <p class="muted">Spawns busy-loop processes, one per worker.</p>
+    {% if state.cpu_load.active %}
+    <button hx-post="/controls/cpu" hx-vals='{"enabled": false}' hx-target="#controls" hx-swap="outerHTML">Stop</button>
+    {% else %}
+    <form hx-post="/controls/cpu" hx-target="#controls" hx-swap="outerHTML">
+      <input type="hidden" name="enabled" value="true">
+      <label>Workers <input type="number" name="workers" value="1" min="1" max="64"></label>
+      <button type="submit" class="primary">Start</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="control">
+    <h3>Crash</h3>
+    <p class="muted">Exits the process. Watch the restart policy react.</p>
+    <form hx-post="/controls/crash" hx-target="#crash-result" hx-swap="innerHTML" hx-confirm="Exit the process now?">
+      <label>Exit code <input type="number" name="exit_code" value="1" min="0" max="255"></label>
+      <button type="submit" class="danger">Crash</button>
+    </form>
+    <div id="crash-result" class="muted"></div>
+  </div>
+</div>
+{% endif %}
+</div>
