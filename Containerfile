@@ -1,4 +1,4 @@
-# Pinned by digest (multi-arch index) so Dependabot can bump it; the tag is informational.
+# Pinned by tag (multi-arch index) so Dependabot can bump it; the tag is informational.
 FROM registry.access.redhat.com/ubi10/python-312-minimal:1789347582
 
 LABEL org.opencontainers.image.title="gcp-dash" \

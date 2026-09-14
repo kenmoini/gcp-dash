@@ -5,6 +5,8 @@ metadata:
   name: gcp-dash-config
 data:
   # Set to the GCP project the service account can read.
-  GCP_PROJECT: "my-gcp-project"
+  # This could be left empty, but for some environments a SA will be created in one project
+  # and then given access to other projects, which is why this is a separate variable.
+  GCP_PROJECT: "" 
   GCP_CACHE_TTL_SECONDS: "60"
   CONTROLS_ENABLED: "true"
