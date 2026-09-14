@@ -64,7 +64,7 @@ class TTLCache:
             previous = entry.value if entry is not None else None
             try:
                 entry = CacheEntry(value=loader(), fetched_at=self._wall(), error=None)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - any loader failure must become a cache error, not a 500
                 entry = CacheEntry(value=previous, fetched_at=self._wall(), error=str(exc))
             with self._lock:
                 # If invalidate_all ran while loader() was in flight, the epoch moved

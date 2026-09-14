@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.concurrency import run_in_threadpool
@@ -67,7 +67,7 @@ async def partial_gcp(
 ):
     entry = await run_in_threadpool(svc.fetch, kind, refresh)
     fetched_at = (
-        datetime.fromtimestamp(entry.fetched_at, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        datetime.fromtimestamp(entry.fetched_at, tz=UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
         if entry.fetched_at
         else None
     )

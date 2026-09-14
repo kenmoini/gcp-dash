@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace as NS
 
 from gcp_dash.gcp.provider import (
@@ -36,7 +36,7 @@ def test_instance_mapping_without_nics():
 def test_bucket_mapping():
     b = bucket_from_api(
         NS(name="b1", location="US", storage_class="STANDARD",
-           time_created=datetime(2024, 1, 2, tzinfo=timezone.utc))
+           time_created=datetime(2024, 1, 2, tzinfo=UTC))
     )
     assert b.name == "b1" and b.location == "US" and b.storage_class == "STANDARD"
     assert b.created == "2024-01-02T00:00:00+00:00"

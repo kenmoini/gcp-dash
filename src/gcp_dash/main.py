@@ -29,9 +29,9 @@ def create_app(settings: Settings | None = None, *, gcp_provider=None) -> FastAP
     app.state.runtime = RuntimeState()
     app.state.exit_fn = os._exit
     if gcp_provider is not None:
-        factory = lambda: gcp_provider  # noqa: E731
+        factory = lambda: gcp_provider
     else:
-        factory = lambda: LiveGcpProvider(settings.gcp_project)  # noqa: E731
+        factory = lambda: LiveGcpProvider(settings.gcp_project)
     app.state.gcp = GcpService(TTLCache(settings.gcp_cache_ttl_seconds), factory, settings.gcp_project)
     app.state.cpu_load = CpuLoad()
 

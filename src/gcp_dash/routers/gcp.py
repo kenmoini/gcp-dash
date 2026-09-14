@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.concurrency import run_in_threadpool
@@ -23,7 +23,7 @@ def _serialize(value):
 
 def entry_to_payload(kind: str, entry: CacheEntry) -> dict:
     fetched = (
-        datetime.fromtimestamp(entry.fetched_at, tz=timezone.utc).isoformat()
+        datetime.fromtimestamp(entry.fetched_at, tz=UTC).isoformat()
         if entry.fetched_at
         else None
     )
