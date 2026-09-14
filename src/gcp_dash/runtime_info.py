@@ -83,7 +83,7 @@ def read_cgroup_limits(root: Path) -> tuple[float | None, int | None, int | None
         )
     quota = _int_or_none(_read(root, "sys/fs/cgroup/cpu/cpu.cfs_quota_us"))
     period = _int_or_none(_read(root, "sys/fs/cgroup/cpu/cpu.cfs_period_us")) or 100000
-    cpu = None if quota is None or period == 0 else round(quota / period, 2)
+    cpu = None if quota is None else round(quota / period, 2)
     return (
         cpu,
         _int_or_none(_read(root, "sys/fs/cgroup/memory/memory.limit_in_bytes")),

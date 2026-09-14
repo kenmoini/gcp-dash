@@ -1,5 +1,5 @@
 {% if entry.error %}<div class="error">{{ entry.error }}</div>{% endif %}
 <p class="muted">
-  {% if entry.fetched_at %}Fetched {{ fetched_at }}{% else %}Never fetched{% endif %}
+  {% if entry.error and entry.value is not none %}Last attempt {{ fetched_at }} failed; showing previously cached data{% elif entry.fetched_at %}Fetched {{ fetched_at }}{% else %}Never fetched{% endif %}
   · <a href="#" hx-get="/partials/gcp/{{ kind }}?refresh=1" hx-target="closest [data-gcp-panel]" hx-swap="innerHTML">refresh</a>
 </p>

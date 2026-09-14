@@ -3,6 +3,7 @@ kind: ConfigMap
 metadata:
   name: gcp-dash-config
 data:
-  GCP_PROJECT: "itpc-gcp-global-revenue-claude"
+  # Set to the GCP project the service account can read.
+  GCP_PROJECT: "my-gcp-project"
   GCP_CACHE_TTL_SECONDS: "60"
   CONTROLS_ENABLED: "true"

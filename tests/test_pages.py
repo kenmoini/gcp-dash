@@ -53,6 +53,19 @@ def test_gcp_partial_unknown_kind_404(client):
     assert client.get("/partials/gcp/nope").status_code == 404
 
 
+def test_gcp_partial_stale_data_wording():
+    app = create_app(Settings(gcp_project="p"), gcp_provider=FakeGcpProvider())
+    client = TestClient(app)
+    first = client.get("/partials/gcp/networks")
+    assert first.status_code == 200 and "default" in first.text
+
+    app.state.gcp._provider.fail = {"list_networks"}
+    html = client.get("/partials/gcp/networks?refresh=1").text
+    assert 'class="error"' in html
+    assert "default" in html
+    assert "showing previously cached data" in html
+
+
 def test_controls_hidden_when_disabled():
     app = create_app(Settings(controls_enabled=False), gcp_provider=FakeGcpProvider())
     html = TestClient(app).get("/").text

@@ -87,7 +87,8 @@ gcloud iam service-accounts keys create key.json \
 The manifests live in `deploy/kubernetes` (base) and `deploy/openshift` (adds a Route on top of the Kubernetes base).
 
 1. Push an image built from this repo to a registry, then edit the `images:` entry in `deploy/kubernetes/kustomization.yaml` to point `newName` at your registry instead of `quay.io/kenmoini/gcp-dash`.
-2. Create the GCP key secret, either from the example file or directly from `kubectl`:
+2. Set `GCP_PROJECT` in `deploy/kubernetes/configmap.yaml` to the GCP project the service account can read.
+3. Create the GCP key secret, either from the example file or directly from `kubectl`:
 
    ```bash
    cp deploy/kubernetes/secret.example.yaml deploy/kubernetes/secret.yaml
@@ -103,7 +104,7 @@ The manifests live in `deploy/kubernetes` (base) and `deploy/openshift` (adds a 
 
    The secret is optional: the Deployment mounts it with `optional: true`, so the app still starts without it (the GCP panels just show an error banner).
 
-3. Apply the manifests:
+4. Apply the manifests:
 
    ```bash
    kubectl apply -k deploy/kubernetes
@@ -120,11 +121,15 @@ With the app deployed and a shell open on the cluster:
 - **CPU load.** Run `curl -X POST -d enabled=true -d workers=1 <route>/controls/cpu`. Watch `kubectl top pod`. CPU usage climbs toward the container's limit.
 - **Crash.** Run `curl -X POST -d exit_code=1 <route>/controls/crash`. Watch `kubectl get pods -w`. The pod's restart count goes up by one.
 
+## Security
+
+The control endpoints (`/controls/liveness`, `/controls/readiness`, `/controls/cpu`, `/controls/crash`) and the GCP pages are unauthenticated by design. Anyone who can reach the app can restart it, saturate its CPU, drain it from the Service, and read the project's inventory: instance names and IPs, firewall rules, and error text that can include the service-account email. There is no CSRF protection. Set `CONTROLS_ENABLED=false` on any shared cluster. Do not expose the Route or Service on the public internet. Use a read-only service account (`roles/viewer`) scoped to a throwaway project, not a production one.
+
 ## Configuration
 
 | Variable | Set by | Purpose |
 |---|---|---|
-| `PORT` | ConfigMap / user | Port uvicorn listens on (default `8080`) |
+| `PORT` | ConfigMap / user | Port uvicorn listens on (default `8080`). Changing it also requires updating the Deployment's `containerPort`, the liveness/readiness probes, and the image `HEALTHCHECK`, which all assume 8080. |
 | `GCP_PROJECT` | ConfigMap | GCP project ID the GCP page queries |
 | `GCP_CACHE_TTL_SECONDS` | ConfigMap | TTL for the per-resource GCP cache in seconds (default `60`) |
 | `CONTROLS_ENABLED` | ConfigMap | Whether the controls panel/endpoints are active (default `true`) |

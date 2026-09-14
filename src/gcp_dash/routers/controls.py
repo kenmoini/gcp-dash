@@ -22,7 +22,7 @@ def require_controls_enabled(settings: Settings = Depends(get_settings)) -> None
 
 
 def state_payload(request: Request) -> dict:
-    """Current control state; extended with CPU load info in Task 5."""
+    """Current control state: probe flags, uptime, controls gate, and CPU-load status."""
     payload = request.app.state.runtime.snapshot()
     payload["controls_enabled"] = request.app.state.settings.controls_enabled
     cpu = getattr(request.app.state, "cpu_load", None)

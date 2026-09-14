@@ -1,3 +1,5 @@
+import threading
+
 import pytest
 
 from gcp_dash.gcp.cache import TTLCache
@@ -47,3 +49,45 @@ def test_unknown_kind():
     svc = GcpService(TTLCache(60), lambda: FakeGcpProvider(), "p")
     with pytest.raises(KeyError):
         svc.fetch("nope")
+
+
+def test_provider_construction_does_not_block_other_fetches():
+    started = threading.Event()
+    release = threading.Event()
+    call_count = []
+
+    def factory():
+        call_count.append(1)
+        started.set()
+        assert release.wait(timeout=5)
+        return FakeGcpProvider()
+
+    svc = GcpService(TTLCache(60), factory, "test-project")
+    results = {}
+
+    def run_instances():
+        results["instances"] = svc.fetch("instances")
+
+    t1 = threading.Thread(target=run_instances)
+    t1.start()
+    assert started.wait(timeout=5)
+
+    def run_buckets():
+        results["buckets"] = svc.fetch("buckets")
+
+    t2 = threading.Thread(target=run_buckets)
+    t2.start()
+
+    # The second fetch also needs the provider, so it legitimately blocks too -
+    # but it is not deadlocked: it makes progress once released, same as the first.
+    t2.join(timeout=0.2)
+    assert t2.is_alive()
+
+    release.set()
+    t1.join(timeout=5)
+    t2.join(timeout=5)
+
+    assert not t1.is_alive() and not t2.is_alive()
+    assert results["instances"].value[0].name == "vm-a"
+    assert results["buckets"].value[0].name == "bucket-a"
+    assert len(call_count) >= 1

@@ -35,8 +35,12 @@ class GcpService:
 
     def _get_provider(self) -> GcpProvider:
         with self._lock:
+            if self._provider is not None:
+                return self._provider
+        provider = self._factory()
+        with self._lock:
             if self._provider is None:
-                self._provider = self._factory()
+                self._provider = provider
             return self._provider
 
     @property

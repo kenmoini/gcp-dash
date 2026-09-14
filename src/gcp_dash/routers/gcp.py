@@ -18,7 +18,7 @@ def _serialize(value):
         return None
     if is_dataclass(value):
         return asdict(value)
-    return [asdict(v) for v in value]
+    return [asdict(v) if is_dataclass(v) else v for v in value]
 
 
 def entry_to_payload(kind: str, entry: CacheEntry) -> dict:
