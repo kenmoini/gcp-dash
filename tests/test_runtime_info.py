@@ -87,6 +87,26 @@ def test_collect_reads_pod_env_and_os_release(tmp_path):
     assert info.python_version.startswith("3.")
 
 
+def test_cgroup_v2_malformed_cpu_max(tmp_path):
+    _mk(tmp_path, "sys/fs/cgroup/cpu.max", "garbage 100000\n")
+    _mk(tmp_path, "sys/fs/cgroup/memory.max", "268435456\n")
+    _mk(tmp_path, "sys/fs/cgroup/memory.current", "1048576\n")
+    cpu, mem, usage = read_cgroup_limits(tmp_path)
+    assert cpu is None
+    assert mem == 268435456
+    assert usage == 1048576
+
+
+def test_cgroup_v2_zero_period(tmp_path):
+    _mk(tmp_path, "sys/fs/cgroup/cpu.max", "50000 0\n")
+    _mk(tmp_path, "sys/fs/cgroup/memory.max", "268435456\n")
+    _mk(tmp_path, "sys/fs/cgroup/memory.current", "1048576\n")
+    cpu, mem, usage = read_cgroup_limits(tmp_path)
+    assert cpu == 0.5
+    assert mem == 268435456
+    assert usage == 1048576
+
+
 def test_api_runtime_endpoint(client):
     body = client.get("/api/runtime").json()
     assert "runtime" in body and "orchestrator" in body

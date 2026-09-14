@@ -72,8 +72,10 @@ def read_cgroup_limits(root: Path) -> tuple[float | None, int | None, int | None
     """Return (cpu_limit_cores, memory_limit_bytes, memory_usage_bytes); None means unlimited/unknown."""
     cpu_max = _read(root, "sys/fs/cgroup/cpu.max")
     if cpu_max is not None:  # cgroup v2
-        quota, _, period = cpu_max.partition(" ")
-        cpu = None if quota == "max" else round(int(quota) / int(period or 100000), 2)
+        quota, _, period_str = cpu_max.partition(" ")
+        quota_int = _int_or_none(quota)
+        period_int = _int_or_none(period_str) or 100000
+        cpu = None if quota_int is None else round(quota_int / period_int, 2)
         return (
             cpu,
             _int_or_none(_read(root, "sys/fs/cgroup/memory.max")),
@@ -81,7 +83,7 @@ def read_cgroup_limits(root: Path) -> tuple[float | None, int | None, int | None
         )
     quota = _int_or_none(_read(root, "sys/fs/cgroup/cpu/cpu.cfs_quota_us"))
     period = _int_or_none(_read(root, "sys/fs/cgroup/cpu/cpu.cfs_period_us")) or 100000
-    cpu = None if quota is None else round(quota / period, 2)
+    cpu = None if quota is None or period == 0 else round(quota / period, 2)
     return (
         cpu,
         _int_or_none(_read(root, "sys/fs/cgroup/memory/memory.limit_in_bytes")),
