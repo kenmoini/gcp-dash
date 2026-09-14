@@ -7,7 +7,10 @@ from fastapi import FastAPI
 
 from gcp_dash.config import Settings
 from gcp_dash.cpu_load import CpuLoad
-from gcp_dash.routers import controls, health, runtime
+from gcp_dash.gcp.cache import TTLCache
+from gcp_dash.gcp.provider import LiveGcpProvider
+from gcp_dash.gcp.service import GcpService
+from gcp_dash.routers import controls, gcp, health, runtime
 from gcp_dash.state import RuntimeState
 
 
@@ -23,12 +26,17 @@ def create_app(settings: Settings | None = None, *, gcp_provider=None) -> FastAP
     app.state.settings = settings
     app.state.runtime = RuntimeState()
     app.state.exit_fn = os._exit
-    app.state.gcp_provider = gcp_provider  # used by Task 7
+    if gcp_provider is not None:
+        factory = lambda: gcp_provider  # noqa: E731
+    else:
+        factory = lambda: LiveGcpProvider(settings.gcp_project)  # noqa: E731
+    app.state.gcp = GcpService(TTLCache(settings.gcp_cache_ttl_seconds), factory, settings.gcp_project)
     app.state.cpu_load = CpuLoad()
 
     app.include_router(health.router)
     app.include_router(controls.router)
     app.include_router(runtime.router)
+    app.include_router(gcp.router)
     return app
 
 

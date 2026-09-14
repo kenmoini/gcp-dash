@@ -4,6 +4,7 @@ from fastapi import Request
 
 from gcp_dash.config import Settings
 from gcp_dash.cpu_load import CpuLoad
+from gcp_dash.gcp.service import GcpService
 from gcp_dash.state import RuntimeState
 
 
@@ -17,3 +18,7 @@ def get_runtime_state(request: Request) -> RuntimeState:
 
 def get_cpu_load(request: Request) -> CpuLoad:
     return request.app.state.cpu_load
+
+
+def get_gcp_service(request: Request) -> GcpService:
+    return request.app.state.gcp
