@@ -21,6 +21,7 @@ class CpuLoad:
 
     def start(self, workers: int) -> None:
         with self._lock:
+            self._procs = [p for p in self._procs if p.is_alive()]
             if self._procs:
                 return
             workers = max(1, min(workers, os.cpu_count() or 1))

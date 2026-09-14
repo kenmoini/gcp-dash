@@ -58,3 +58,12 @@ def test_cpu_load_toggle(app, client):
     finally:
         r = client.post("/controls/cpu", data={"enabled": "false"})
     assert r.json()["cpu_load"] == {"active": False, "workers": 0}
+
+
+def test_shutdown_stops_cpu_workers():
+    app = create_app(Settings(gcp_project="p"))
+    with TestClient(app) as c:
+        c.post("/controls/cpu", data={"enabled": "true", "workers": "1"})
+        assert app.state.cpu_load.status()["active"] is True
+    # After TestClient context exits, lifespan shutdown hook should have run
+    assert app.state.cpu_load.status() == {"active": False, "workers": 0}

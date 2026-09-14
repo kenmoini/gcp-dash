@@ -30,3 +30,22 @@ def test_start_is_idempotent_and_clamped():
         assert load.status()["workers"] == 1
     finally:
         load.stop()
+
+
+def test_start_recovers_after_worker_dies():
+    load = CpuLoad()
+    load.start(1)
+    try:
+        assert load.status()["active"] is True
+        # Manually kill the worker to simulate external termination (OOM-kill etc.)
+        p = load._procs[0]
+        p.terminate()
+        p.join(timeout=2)
+        # Status should now show inactive
+        assert load.status() == {"active": False, "workers": 0}
+        # start() should recover and spawn a new worker
+        load.start(1)
+        assert load.status()["active"] is True
+        assert load.status()["workers"] == 1
+    finally:
+        load.stop()
