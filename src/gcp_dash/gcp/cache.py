@@ -15,7 +15,13 @@ class CacheEntry:
 
 
 class TTLCache:
-    """Per-key TTL cache. A failing loader records the error but keeps the last good value."""
+    """Per-key TTL cache. A failing loader records the error but keeps the last good value.
+
+    Each key is guarded by its own lock, so a slow loader for one key never blocks a
+    read or a load for a different key. A short-lived global lock protects only the
+    bookkeeping: creating a key's lock, and clearing the cache in invalidate_all. The
+    same key is still loaded at most once at a time.
+    """
 
     def __init__(
         self,
@@ -27,11 +33,21 @@ class TTLCache:
         self._clock = clock
         self._wall = wall
         self._lock = threading.Lock()
+        self._key_locks: dict[str, threading.Lock] = {}
         self._entries: dict[str, CacheEntry] = {}
         self._expires: dict[str, float] = {}
 
-    def get(self, key: str, loader: Callable[[], Any], force: bool = False) -> CacheEntry:
+    def _lock_for(self, key: str) -> threading.Lock:
         with self._lock:
+            lock = self._key_locks.get(key)
+            if lock is None:
+                lock = threading.Lock()
+                self._key_locks[key] = lock
+            return lock
+
+    def get(self, key: str, loader: Callable[[], Any], force: bool = False) -> CacheEntry:
+        lock = self._lock_for(key)
+        with lock:
             entry = self._entries.get(key)
             if entry is not None and not force and self._clock() < self._expires.get(key, 0):
                 return entry

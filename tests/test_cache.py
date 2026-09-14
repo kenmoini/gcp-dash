@@ -1,3 +1,6 @@
+import threading
+import time
+
 from gcp_dash.gcp.cache import TTLCache
 
 
@@ -58,3 +61,46 @@ def test_invalidate_all():
     cache.get("k", lambda: "v1")
     cache.invalidate_all()
     assert cache.get("k", lambda: "v2").value == "v2"
+
+
+def test_different_keys_load_concurrently():
+    cache = TTLCache(60)
+    release = threading.Event()
+    a_started = threading.Event()
+
+    def loader_a():
+        a_started.set()
+        release.wait(timeout=5)
+        return "a"
+
+    thread = threading.Thread(target=cache.get, args=("a", loader_a))
+    thread.start()
+    assert a_started.wait(timeout=5)
+
+    start = time.monotonic()
+    entry_b = cache.get("b", lambda: "b")
+    elapsed = time.monotonic() - start
+    assert entry_b.value == "b"
+    assert elapsed < 1.0
+
+    release.set()
+    thread.join()
+    assert cache.get("a", lambda: "x").value == "a"
+
+
+def test_same_key_loads_once_under_contention():
+    cache = TTLCache(60)
+    calls = []
+
+    def loader():
+        time.sleep(0.2)
+        calls.append(1)
+        return "v"
+
+    t1 = threading.Thread(target=cache.get, args=("k", loader))
+    t2 = threading.Thread(target=cache.get, args=("k", loader))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+    assert len(calls) == 1
