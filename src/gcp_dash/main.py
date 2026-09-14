@@ -5,7 +5,7 @@ import os
 from fastapi import FastAPI
 
 from gcp_dash.config import Settings
-from gcp_dash.routers import health
+from gcp_dash.routers import controls, health
 from gcp_dash.state import RuntimeState
 
 
@@ -18,6 +18,7 @@ def create_app(settings: Settings | None = None, *, gcp_provider=None) -> FastAP
     app.state.gcp_provider = gcp_provider  # used by Task 7
 
     app.include_router(health.router)
+    app.include_router(controls.router)
     return app
 
 
