@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from gcp_dash.config import Settings
-from gcp_dash.deps import get_runtime_state, get_settings
+from gcp_dash.cpu_load import CpuLoad
+from gcp_dash.deps import get_cpu_load, get_runtime_state, get_settings
 from gcp_dash.state import RuntimeState
 
 router = APIRouter(tags=["controls"])
@@ -69,3 +70,17 @@ def crash(request: Request, exit_code: int = Form(..., ge=0, le=255)):
          "exit_code": exit_code},
         status_code=202,
     )
+
+
+@router.post("/controls/cpu", dependencies=[Depends(require_controls_enabled)])
+def set_cpu_load(
+    request: Request,
+    enabled: bool = Form(...),
+    workers: int = Form(1, ge=1, le=64),
+    cpu: CpuLoad = Depends(get_cpu_load),
+):
+    if enabled:
+        cpu.start(workers)
+    else:
+        cpu.stop()
+    return JSONResponse(state_payload(request))

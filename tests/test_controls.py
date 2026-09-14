@@ -48,3 +48,13 @@ def test_controls_disabled_returns_403():
 @pytest.mark.parametrize("bad", ["-1", "256", "abc"])
 def test_crash_rejects_bad_exit_code(client, bad):
     assert client.post("/controls/crash", data={"exit_code": bad}).status_code == 422
+
+
+def test_cpu_load_toggle(app, client):
+    try:
+        r = client.post("/controls/cpu", data={"enabled": "true", "workers": "1"})
+        assert r.status_code == 200
+        assert r.json()["cpu_load"] == {"active": True, "workers": 1}
+    finally:
+        r = client.post("/controls/cpu", data={"enabled": "false"})
+    assert r.json()["cpu_load"] == {"active": False, "workers": 0}
