@@ -1,0 +1,7 @@
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: gcp-key
+    secret:
+      secretName: gcp-dash-sa-key
+      optional: true

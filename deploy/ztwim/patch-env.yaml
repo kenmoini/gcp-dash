@@ -1,0 +1,5 @@
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: SPIFFE_ENDPOINT_SOCKET
+    value: unix:///run/spire/sockets/spire-agent.sock

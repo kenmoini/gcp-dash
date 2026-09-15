@@ -6,3 +6,16 @@ resources:
   - ingress.yaml
   - gateway.yaml
   - httproute.yaml
+
+patches:
+  - target:
+      kind: ServiceAccount
+      name: gcp-dash
+    patch: |
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: gcp-dash
+        annotations:
+          iam.gke.io/gcp-service-account: gcp-dash@your-project.iam.gserviceaccount.com
+          iam.gke.io/return-principal-id-as-email: "true"

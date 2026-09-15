@@ -1,0 +1,6 @@
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: gcp-key
+    mountPath: /var/secrets/gcp
+    readOnly: true

@@ -23,7 +23,7 @@ spec:
       containers:
         - name: gcp-dash
           image: gcp-dash:dev
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
@@ -31,8 +31,9 @@ spec:
             - configMapRef:
                 name: gcp-dash-config
           env:
-            - name: GOOGLE_APPLICATION_CREDENTIALS
-              value: /var/secrets/gcp/key.json
+            # This are skipped when running on GKE with Workload Identity
+            # - name: GOOGLE_APPLICATION_CREDENTIALS
+            #   value: /var/secrets/gcp/key.json
             - name: POD_NAME
               valueFrom: { fieldRef: { fieldPath: metadata.name } }
             - name: POD_NAMESPACE
@@ -43,10 +44,7 @@ spec:
               valueFrom: { fieldRef: { fieldPath: status.podIP } }
             - name: SERVICE_ACCOUNT
               valueFrom: { fieldRef: { fieldPath: spec.serviceAccountName } }
-          volumeMounts:
-            - name: gcp-key
-              mountPath: /var/secrets/gcp
-              readOnly: true
+          volumeMounts: []
           resources:
             requests: { cpu: 100m, memory: 128Mi }
             limits: { cpu: "1", memory: 512Mi }
@@ -63,8 +61,4 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-      volumes:
-        - name: gcp-key
-          secret:
-            secretName: gcp-dash-sa-key
-            optional: true
+      volumes: []

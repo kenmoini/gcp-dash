@@ -3,7 +3,7 @@ kind: Kustomization
 namespace: gcp-dash
 resources:
   - ../kubernetes
-  - route.yaml
+  - ../openshift/route.yaml
 
 patches:
   - path: patch-env.yaml
