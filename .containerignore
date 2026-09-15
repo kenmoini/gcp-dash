@@ -1,9 +1,10 @@
 .git
+.github
 .venv
 tests
 docs
 deploy
-scripts
+scripts/run-podman.sh
 .pytest_cache
 .ruff_cache
 __pycache__

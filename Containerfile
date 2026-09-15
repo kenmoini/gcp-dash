@@ -20,7 +20,9 @@ RUN pip install --no-cache-dir uv \
  && rm -f /tmp/requirements.txt
 
 COPY --chown=1001:0 src ./src
-RUN pip install --no-cache-dir --no-deps .
+COPY --chown=1001:0 scripts/get-spiffe-token.py /opt/app-root/src/
+RUN pip install --no-cache-dir --no-deps . && \
+    pip install google-api-python-client spiffe --no-cache-dir
 
 ENV PORT=8080 \
     GCP_CACHE_TTL_SECONDS=60 \
