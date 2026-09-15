@@ -1,9 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: gcp-dash
+namespace: gcp-dash-ztwim
 resources:
   - ../kubernetes
-  - ../openshift/route.yaml
+  - route.yaml
 
 patches:
   - path: patch-env.yaml
