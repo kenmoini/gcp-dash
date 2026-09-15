@@ -28,9 +28,10 @@ RUN pip install --no-cache-dir --no-deps . && \
 ADD container_root/ /
 USER 0
 RUN ARCH=$(uname -m) && if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then sed -i 's/x86_64/aarch64/g' /etc/yum.repos.d/google-cloud-sdk.repo; fi
-RUN microdnf update --disablerepo="rhel-10*" -y && \
-    microdnf install --disablerepo="rhel-10*" -y libxcrypt-compat && \
-    CLOUDSDK_SKIP_PY_COMPILATION=1 microdnf install --disablerepo="rhel-10*" -y google-cloud-cli && \
+RUN microdnf update -y || microdnf update --disablerepo="rhel-10*" -y && \
+    microdnf install -y libxcrypt-compat || microdnf install --disablerepo="rhel-10*" -y libxcrypt-compat && \
+    export CLOUDSDK_SKIP_PY_COMPILATION=1 && \
+    microdnf install -y google-cloud-cli || microdnf install --disablerepo="rhel-10*" -y google-cloud-cli && \
     microdnf clean all && \
     rm -rf /var/cache/dnf
 
