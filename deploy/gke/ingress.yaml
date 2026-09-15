@@ -1,14 +1,15 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: gcp-dash
-  annotations:
-    kubernetes.io/ingress.class: gce
 spec:
   rules:
   - http:
       paths:
       - path: /*
+        pathType: ImplementationSpecific
         backend:
-          serviceName: gcp-dash
-          servicePort: 8080
+          service:
+            name: gcp-dash
+            port:
+              number: 8080
