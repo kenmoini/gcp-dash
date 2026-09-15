@@ -19,6 +19,7 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
+      serviceAccountName: gcp-dash
       containers:
         - name: gcp-dash
           image: gcp-dash:dev

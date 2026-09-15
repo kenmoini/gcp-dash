@@ -4,3 +4,5 @@ namespace: gcp-dash
 resources:
   - ../kubernetes
   - ingress.yaml
+  - gateway.yaml
+  - httproute.yaml

@@ -6,6 +6,7 @@ resources:
   - configmap.yaml
   - deployment.yaml
   - service.yaml
+  - serviceaccount.yaml
 images:
   - name: gcp-dash
     newName: ghcr.io/kenmoini/gcp-dash   # change to your registry

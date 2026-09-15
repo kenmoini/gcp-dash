@@ -1,0 +1,18 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gcp-dash
+spec:
+  # CHANGE ME
+  hostnames:
+  - "gcp-dash.domain.com"
+  parentRefs:
+  - name: external-http-gateway
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: gcp-dash
+      port: 8080
