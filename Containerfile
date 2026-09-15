@@ -33,7 +33,9 @@ RUN microdnf update -y || microdnf update --disablerepo="rhel-10*" -y; \
     export CLOUDSDK_SKIP_PY_COMPILATION=1; \
     microdnf install -y google-cloud-cli || microdnf install --disablerepo="rhel-10*" -y google-cloud-cli; \
     microdnf clean all && \
-    rm -rf /var/cache/dnf
+    rm -rf /var/cache/dnf && \
+    chown -R 1001:0 /opt/app-root/src && \
+    chmod -R g+rw /opt/app-root/src
 
 ENV PORT=8080 \
     GCP_CACHE_TTL_SECONDS=60 \
