@@ -4,6 +4,7 @@ namespace: gcp-dash-ztwim
 resources:
   - ../kubernetes
   - route.yaml
+  # - gcp-secret.example.yaml
 
 patches:
   - path: patch-env.yaml
@@ -18,3 +19,13 @@ patches:
     target:
       kind: Deployment
       name: gcp-dash
+
+  - target:
+      kind: Deployment
+      name: gcp-dash
+    path: patch-initContainers.yaml
+
+  - target:
+      kind: Deployment
+      name: gcp-dash
+    path: patch-refreshSidecar.yaml

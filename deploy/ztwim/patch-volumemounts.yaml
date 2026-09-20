@@ -4,3 +4,10 @@
     name: spiffe-workload-api
     readOnly: true
     mountPath: /run/spire/sockets
+
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: gcp-ztwim-swap
+    mountPath: /var/run/secrets/gcp
+    readOnly: true # Main application only needs read access

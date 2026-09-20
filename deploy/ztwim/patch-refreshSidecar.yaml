@@ -1,0 +1,46 @@
+- op: add
+  path: /spec/template/spec/containers/-
+  value:
+    name: ztwim-refresh
+    image: ghcr.io/kenmoini/gcp-dash:latest
+    imagePullPolicy: Always
+    env:
+    - name: PROJECT_NUMBER
+      valueFrom:
+        secretKeyRef:
+          name: gcp-dash-config
+          key: PROJECT_NUMBER
+    - name: WORKLOAD_NAME
+      valueFrom:
+        secretKeyRef:
+          name: gcp-dash-config
+          key: WORKLOAD_NAME
+    - name: GSA_ID
+      valueFrom:
+        secretKeyRef:
+          name: gcp-dash-config
+          key: GSA_ID
+    - name: SPIFFE_ENDPOINT_SOCKET
+      value: unix:///run/spire/sockets/spire-agent.sock
+    volumeMounts:
+      - name: gcp-ztwim-swap
+        mountPath: /var/run/secrets/gcp
+        readOnly: false
+      - name: spiffe-workload-api
+        mountPath: /run/spire/sockets
+        readOnly: true
+    command:
+      - /bin/sh
+      - -c
+      - |
+        refreshToken() {
+          echo "########### Refreshing Token..."
+          ./get-spiffe-token.py -a https://iam.googleapis.com/projects/$(PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(WORKLOAD_NAME)/providers/$(WORKLOAD_NAME) -o /var/run/secrets/gcp/token
+
+          echo "########### Token Refreshed!"
+        }
+
+        while true; do
+          sleep 100 # Refresh every 1-ish minutes
+          refreshToken
+        done

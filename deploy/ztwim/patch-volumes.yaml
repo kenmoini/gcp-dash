@@ -5,3 +5,17 @@
     csi:
       driver: csi.spiffe.io
       readOnly: true
+
+# Add a emptyDir volume for sharing between initContainer and main container
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: gcp-ztwim-swap
+    emptyDir: {}
+
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: gcp-dash-config
+    secret:
+      secretName: gcp-dash-config
