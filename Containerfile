@@ -21,8 +21,10 @@ RUN pip install --no-cache-dir uv \
 
 COPY --chown=1001:0 src ./src
 COPY --chown=1001:0 scripts/get-spiffe-token.py /opt/app-root/src/
+COPY --chown=1001:0 scripts/decode-jwt.py /opt/app-root/src/
+
 RUN pip install --no-cache-dir --no-deps . && \
-    pip install google-api-python-client spiffe --no-cache-dir
+    pip install google-api-python-client spiffe pyjwt --no-cache-dir
 
 # Add GCloud CLI
 ADD container_root/ /
