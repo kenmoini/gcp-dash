@@ -20,6 +20,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: gcp-dash
+      initContainers: []
       containers:
         - name: gcp-dash
           image: gcp-dash:dev
