@@ -1,3 +1,4 @@
+import logging
 import threading
 
 import pytest
@@ -91,3 +92,43 @@ def test_provider_construction_does_not_block_other_fetches():
     assert results["instances"].value[0].name == "vm-a"
     assert results["buckets"].value[0].name == "bucket-a"
     assert len(call_count) >= 1
+
+
+def _records(caplog, level):
+    return [r for r in caplog.records if r.name == "gcp_dash.gcp.service" and r.levelno == level]
+
+
+def test_failed_fetch_logs_warning_with_traceback_at_debug(caplog):
+    caplog.set_level(logging.DEBUG, logger="gcp_dash.gcp.service")
+    svc = GcpService(TTLCache(60), lambda: FakeGcpProvider(fail={"list_firewalls"}), "p")
+    svc.fetch("firewalls")
+    [record] = _records(caplog, logging.WARNING)
+    assert "kind=firewalls" in record.getMessage() and "permission denied" in record.getMessage()
+    assert record.exc_info is not None
+
+
+def test_failed_fetch_logs_warning_without_traceback_at_info(caplog):
+    caplog.set_level(logging.INFO, logger="gcp_dash.gcp.service")
+    svc = GcpService(TTLCache(60), lambda: FakeGcpProvider(fail={"list_firewalls"}), "p")
+    svc.fetch("firewalls")
+    [record] = _records(caplog, logging.WARNING)
+    assert not record.exc_info
+
+
+def test_successful_fetch_logs_info(caplog):
+    caplog.set_level(logging.INFO, logger="gcp_dash.gcp.service")
+    svc = GcpService(TTLCache(60), lambda: FakeGcpProvider(), "p")
+    svc.fetch("instances")
+    [record] = _records(caplog, logging.INFO)
+    assert "kind=instances items=1" in record.getMessage()
+
+
+def test_provider_construction_failure_is_logged(caplog):
+    caplog.set_level(logging.INFO, logger="gcp_dash.gcp.service")
+
+    def factory():
+        raise GcpError("could not load Google credentials")
+
+    GcpService(TTLCache(60), factory, None).fetch("project")
+    [record] = _records(caplog, logging.WARNING)
+    assert "could not load Google credentials" in record.getMessage()

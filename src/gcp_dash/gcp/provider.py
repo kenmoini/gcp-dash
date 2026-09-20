@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import logging
+import os
 from typing import Any, Protocol
 
 from gcp_dash.gcp.models import Bucket, FirewallRule, Instance, Network, Project, Subnetwork
+
+log = logging.getLogger(__name__)
 
 
 class GcpError(Exception):
@@ -115,6 +119,10 @@ class LiveGcpProvider:
     """Wraps google-cloud-* clients. Constructed lazily; every method raises GcpError on failure."""
 
     def __init__(self, project_id: str | None = None) -> None:
+        log.debug(
+            "loading application default credentials (GOOGLE_APPLICATION_CREDENTIALS=%s)",
+            os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"),
+        )
         try:
             import google.auth
 
@@ -125,6 +133,18 @@ class LiveGcpProvider:
         if not resolved:
             raise GcpError("no GCP project: set GCP_PROJECT or use credentials that carry a project")
         self.project_id: str = resolved
+        creds = self._credentials
+        log.info(
+            "google credentials loaded: type=%s service_account=%s quota_project=%s "
+            "adc_file=%s default_project=%s project=%s (from %s)",
+            type(creds).__name__,
+            getattr(creds, "service_account_email", None),
+            getattr(creds, "quota_project_id", None),
+            os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"),
+            default_project,
+            resolved,
+            "GCP_PROJECT" if project_id else "credentials",
+        )
 
     def _call(self, fn):
         try:

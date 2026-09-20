@@ -41,7 +41,9 @@ RUN microdnf update -y || microdnf update --disablerepo="rhel-10*" -y; \
 
 ENV PORT=8080 \
     GCP_CACHE_TTL_SECONDS=60 \
-    CONTROLS_ENABLED=true
+    CONTROLS_ENABLED=true \
+    LOG_LEVEL=INFO \
+    GCP_DEBUG=false
 
 EXPOSE 8080
 USER 1001

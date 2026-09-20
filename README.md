@@ -123,7 +123,7 @@ With the app deployed and a shell open on the cluster:
 
 ## Security
 
-The control endpoints (`/controls/liveness`, `/controls/readiness`, `/controls/cpu`, `/controls/crash`) and the GCP pages are unauthenticated by design. Anyone who can reach the app can restart it, saturate its CPU, drain it from the Service, and read the project's inventory: instance names and IPs, firewall rules, and error text that can include the service-account email. There is no CSRF protection. Set `CONTROLS_ENABLED=false` on any shared cluster. Do not expose the Route or Service on the public internet. Use a read-only service account (`roles/viewer`) scoped to a throwaway project, not a production one.
+The control endpoints (`/controls/liveness`, `/controls/readiness`, `/controls/cpu`, `/controls/crash`) and the GCP pages are unauthenticated by design. Anyone who can reach the app can restart it, saturate its CPU, drain it from the Service, and read the project's inventory: instance names and IPs, firewall rules, and error text that can include the service-account email. There is no CSRF protection. Set `CONTROLS_ENABLED=false` on any shared cluster. `GCP_DEBUG=true` writes Google API request and response payloads (the project's resource inventory) to the container log; leave it off unless you are actively debugging. Do not expose the Route or Service on the public internet. Use a read-only service account (`roles/viewer`) scoped to a throwaway project, not a production one.
 
 ## Configuration
 
@@ -133,12 +133,46 @@ The control endpoints (`/controls/liveness`, `/controls/readiness`, `/controls/c
 | `GCP_PROJECT` | ConfigMap | GCP project ID the GCP page queries |
 | `GCP_CACHE_TTL_SECONDS` | ConfigMap | TTL for the per-resource GCP cache in seconds (default `60`) |
 | `CONTROLS_ENABLED` | ConfigMap | Whether the controls panel/endpoints are active (default `true`) |
+| `LOG_LEVEL` | ConfigMap | Root log level for the app's own messages: `DEBUG`, `INFO`, `WARNING`, `ERROR` (default `INFO`) |
+| `GCP_DEBUG` | ConfigMap | `true` logs every Google API and token request/response and adds tracebacks to failed GCP fetches (default `false`). See [Troubleshooting GCP errors](#troubleshooting-gcp-errors). |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Deployment env | Path to the service-account key (`/var/secrets/gcp/key.json`), used by the GCP client libraries |
 | `POD_NAME` | Downward API | Pod name shown in the runtime panel |
 | `POD_NAMESPACE` | Downward API | Pod namespace shown in the runtime panel (falls back to the serviceaccount namespace file if unset) |
 | `NODE_NAME` | Downward API | Node the pod is scheduled on |
 | `POD_IP` | Downward API | Pod IP address |
 | `SERVICE_ACCOUNT` | Downward API | Kubernetes service account the pod runs as |
+
+## Troubleshooting GCP errors
+
+When a GCP panel shows an error banner, the container log has the detail the banner does not.
+
+At the default `LOG_LEVEL=INFO` the app logs:
+
+- one line at startup with the version, project, cache TTL, and logging settings;
+- one line the first time credentials load: the credential class (`Credentials` from `google.oauth2.service_account`, `external_account`, `compute_engine`, ...), the service-account email, the quota project, whether `GOOGLE_APPLICATION_CREDENTIALS` is set, and which project was resolved and from where;
+- one `INFO` line per successful fetch with item count and duration, and one `WARNING` per failed fetch with the exception class and message. With the default 60 s cache that is at most one line per resource type per minute.
+
+For the full picture, turn on `GCP_DEBUG`. On a cluster you can do that without touching the manifests:
+
+```bash
+kubectl -n gcp-dash set env deployment/gcp-dash GCP_DEBUG=true
+kubectl -n gcp-dash logs deployment/gcp-dash -c gcp-dash -f
+```
+
+Then refresh a panel. With `GCP_DEBUG=true` you get, in addition to the lines above:
+
+- the full traceback for each failed fetch, including the original `google.auth` / `google.api_core` exception that the panel error was derived from;
+- `google.auth.transport.requests` lines for every token request: the STS exchange (`sts.googleapis.com/v1/token`), service-account impersonation (`iamcredentials.googleapis.com/...:generateAccessToken`), OAuth refresh, and each Cloud Storage REST call, with the HTTP response body;
+- `google.cloud.compute_v1...` and `google.cloud.resourcemanager_v3...` request/response pairs with the RPC name, URL, HTTP status, and payload;
+- `urllib3` connection lines, useful when egress to `*.googleapis.com` is blocked by a NetworkPolicy or proxy.
+
+Each of those lines ends with ` | {...}` JSON. The app redacts `Authorization` headers and token, assertion, and key fields before logging, and cuts payloads at 32 KiB. Turn debug off again when done:
+
+```bash
+kubectl -n gcp-dash set env deployment/gcp-dash GCP_DEBUG-
+```
+
+Locally, `GCP_DEBUG=true scripts/run-podman.sh key.json my-project` or `GCP_DEBUG=true uv run --python 3.12 uvicorn gcp_dash.main:app --port 8080` does the same.
 
 ## Tests
 
