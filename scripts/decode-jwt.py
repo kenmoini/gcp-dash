@@ -1,3 +1,5 @@
+#!/opt/app-root/bin/python
+
 import jwt
 import argparse
 
