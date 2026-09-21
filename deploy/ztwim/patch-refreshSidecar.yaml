@@ -33,14 +33,27 @@
       - /bin/sh
       - -c
       - |
-        refreshToken() {
-          echo "########### Refreshing Token..."
-          ./get-spiffe-token.py -a https://iam.googleapis.com/projects/$(PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(WORKLOAD_NAME)/providers/$(WORKLOAD_NAME) -o /var/run/secrets/gcp/token
 
-          echo "########### Token Refreshed!"
+        refreshToken() {
+          echo "########### Checking expiration..."
+          EXPIRATION=$(./decode-jwt.py -f /var/run/secrets/gcp/token -s exp)
+          CURRENT_TIME=$(date +%s)
+          TIME_LEFT=$((EXPIRATION - CURRENT_TIME))
+          echo "########### Time left until expiration: $TIME_LEFT seconds"
+          if [ "$TIME_LEFT" -lt 30 ]; then
+            echo "########### Refreshing Token..."
+            ./get-spiffe-token.py -a https://iam.googleapis.com/projects/$(PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(WORKLOAD_NAME)/providers/$(WORKLOAD_NAME) -o /var/run/secrets/gcp/token
+            echo "########### Token Refreshed!"
+          else
+            echo "########### Token is still valid. No refresh needed."
+          fi
+        }
+        mainExec() {
+          while true; do
+            sleep 10 # Check every 10 seconds
+            refreshToken
+          done
         }
 
-        while true; do
-          sleep 100 # Refresh every 1-ish minutes
-          refreshToken
-        done
+        echo "########### Starting Refresh Sidecar..."
+        mainExec
