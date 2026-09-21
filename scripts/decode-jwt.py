@@ -1,5 +1,4 @@
-#!/Users/kenmoini/Development/gcp-dash/.venv/bin/python3
-####!/opt/app-root/bin/python
+#!/opt/app-root/bin/python
 
 import jwt
 import argparse
