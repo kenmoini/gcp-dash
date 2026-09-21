@@ -126,7 +126,9 @@ class LiveGcpProvider:
         try:
             import google.auth
 
-            self._credentials, default_project = google.auth.default()
+            self._credentials, default_project = google.auth.default(
+                scopes=["https://www.googleapis.com/auth/cloud-platform"]
+            )
         except Exception as exc:  # DefaultCredentialsError etc.
             raise GcpError(f"could not load Google credentials: {exc}") from exc
         resolved = project_id or default_project
