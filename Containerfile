@@ -1,5 +1,5 @@
 # Pinned by tag (multi-arch index) so Dependabot can bump it; the tag is informational.
-FROM registry.access.redhat.com/ubi10/python-312-minimal:1789347582
+FROM registry.access.redhat.com/ubi10/python-312-minimal:1789953601
 
 LABEL org.opencontainers.image.title="gcp-dash" \
       org.opencontainers.image.description="Container runtime dashboard with health-probe controls and a GCP resource viewer" \
