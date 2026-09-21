@@ -1,58 +1,63 @@
-# GKE WIF Deployment
+# GCP Dash Deployment - For GKE with Workload Identity Federation
+
+This set of manifests deploys the application on a GKE cluster with WIF enabled.
+
+Before doing so, a few steps must be taken:
+
+## Prerequisites
 
 ```bash
+# Set the region of your GKE cluster
 REGION="us-central1"
+# Set the name for your GKE cluster
 GKE_NAME="autopilot-cluster-1"
 
-KNS="gcp-dash"
-KSA="gcp-dash"
-GSA_NAME="gcp-dash"
+# Set the Kubernetes Namespace we'll deploy the app to
+K8S_NS="gcp-dash"
+# Set the Kubernetes ServiceAccount Name
+K8S_SA="gcp-dash"
+
+# Google Service Account Name - This must match general prereq setup steps
+GOOGLE_SA_NAME="gcp-dash"
+
 PROJECT=$(gcloud config get-value project)
 PROJECT_ID=$(gcloud config get-value project) # This is the same in some envs
-BUCKET_NAME="gcp-dash-${PROJECT}"
-GSA_ID="${GSA_NAME}@${PROJECT}.iam.gserviceaccount.com"
+# Or if it's the Project Number
+# PROJECT_ID=$(gcloud projects describe $PROJECT --format="value(projectNumber)")
 
-# Create A GCP ServiceAccount
-gcloud iam service-accounts create ${GSA_NAME} --project=${PROJECT}
+# Easy Var
+GOOGLE_SA_ID="${GOOGLE_SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
 
-# Create a Bucket to ensure there's some data in the dash
-gcloud storage buckets create gs://${BUCKET_NAME}
+# Authenticate to your GKE cluster
+gcloud container clusters get-credentials ${GKE_NAME} --region ${REGION} --project ${PROJECT} --dns-endpoint
 
-# Give GSA Access to the bucket
-gcloud storage buckets add-iam-policy-binding gs://${BUCKET_NAME} --member="serviceAccount:${GSA_ID}" --role="roles/storage.objectViewer"
-
-# Give Service Account Access to APIs
-gcloud projects add-iam-policy-binding projects/${PROJECT} \
-    --role="roles/container.clusterViewer" \
-    --member="serviceAccount:${GSA_ID}" \
-    --condition=None
-gcloud projects add-iam-policy-binding projects/${PROJECT} \
-    --role="roles/storage.objectViewer" \
-    --member="serviceAccount:${GSA_ID}" \
-    --condition=None
-gcloud projects add-iam-policy-binding projects/${PROJECT} \
-    --role="roles/storage.bucketViewer" \
-    --member="serviceAccount:${GSA_ID}" \
-    --condition=None
-gcloud projects add-iam-policy-binding projects/${PROJECT} \
-    --role="roles/compute.viewer" \
-    --member="serviceAccount:${GSA_ID}" \
-    --condition=None
-gcloud projects add-iam-policy-binding projects/${PROJECT} \
-    --role="roles/compute.networkViewer" \
-    --member="serviceAccount:${GSA_ID}" \
-    --condition=None
-
-# Get WID Endpoint from GKE cluster
+# Get Workload Identity Discovery Endpoint from GKE cluster
 WID_ENDPOINT=$(gcloud container clusters describe ${GKE_NAME} --region=${REGION} --format="value(workloadIdentityConfig.workloadPool)")
 
-# Add Impersonation ability IAM Binding
-gcloud iam service-accounts add-iam-policy-binding ${GSA_ID} \
+# Add Impersonation ability IAM Binding to the workload we'll deploy
+gcloud iam service-accounts add-iam-policy-binding ${GOOGLE_SA_ID} \
   --role=roles/iam.workloadIdentityUser \
-  --member="serviceAccount:${WID_ENDPOINT}[${KNS}/${KSA}]"
+  --member="serviceAccount:${WID_ENDPOINT}[${K8S_NS}/${K8S_SA}]"
+```
+
+## Deploy
+
+Now that the GKE Namespace and ServiceAccount have been given permission to impersonate the Google Service Account, we can deploy the application with a little
+
+```bash
+# Deploy the GKE workload
+kubectl apply -k deploy/gke
 
 # Annotate the ServiceAccount
-kubectl annotate serviceaccount ${KSA} -n ${KNS} iam.gke.io/gcp-service-account=${GSA_ID}
+# There is a default placeholder, overwrite
+kubectl annotate serviceaccount ${K8S_SA} -n ${K8S_NS} iam.gke.io/gcp-service-account=${GOOGLE_SA_ID} --overwrite
 
-# Make sure the GOOGLE_APPLICATION_CREDENTIALS env var is not set in the Deployment and the Secret is not made
+# Bounce the Pods
+kubectl rollout restart -n ${K8S_NS} deployment/gcp-dash
 ```
+
+The default GKE deployment creates an Ingress as well as a Gateway and HTTPRoute.  It takes a while for them to spin up so whichever gets there first really I guess...
+
+## Extras
+
+In the `deploy/gke` folder there is a `deny-netpol.yaml` file - this denies all traffic to the workload pods, in case you want to keep the application scaled up but not accessible from the public Internet for a while.  It's wild out there and the container can burn CPU, so useful when testing and importantly when not actively testing.
