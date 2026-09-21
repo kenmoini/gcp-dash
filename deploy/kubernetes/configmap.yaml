@@ -10,3 +10,8 @@ data:
   GCP_PROJECT: ""
   GCP_CACHE_TTL_SECONDS: "60"
   CONTROLS_ENABLED: "true"
+  # Root log level for the app itself: DEBUG, INFO, WARNING, ERROR.
+  LOG_LEVEL: "INFO"
+  # Set to "true" to log every Google API / token request and response, plus tracebacks
+  # for failed GCP fetches. Verbose; turn it off again once you have what you need.
+  GCP_DEBUG: "false"
