@@ -13,6 +13,6 @@ data:
     cat > /tmp/helper.conf <<EOF
     agent_address = "/run/spire/sockets/spire-agent.sock"
     jwt_svids = [{jwt_audience="https://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WORKLOAD_IDENTITY_POOL}/providers/$WORKLOAD_PROVIDER_NAME", jwt_svid_file_name="/var/run/secrets/gcp/token"}]
-    jwt_svid_file_mode = 0444
+    jwt_svid_file_mode = 0644
     EOF
     /spiffe-helper -config /tmp/helper.conf ${DAEMON_MODE}
