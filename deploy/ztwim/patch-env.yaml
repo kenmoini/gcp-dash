@@ -1,10 +1,15 @@
-- op: add
-  path: /spec/template/spec/containers/0/env/-
-  value:
-    name: SPIFFE_ENDPOINT_SOCKET
-    value: unix:///run/spire/sockets/spire-agent.sock
+
+# Makes Google Cloud SDK applications look for it's credentials in this file
 - op: add
   path: /spec/template/spec/containers/0/env/-
   value:
     name: GOOGLE_APPLICATION_CREDENTIALS
     value: /var/run/secrets/gcp/key.json
+
+# This is only needed if your application is SPIRE-aware.
+# You can also use it for debugging in the application since the gcloud CLI is available in the container
+# - op: add
+#   path: /spec/template/spec/containers/0/env/-
+#   value:
+#     name: SPIFFE_ENDPOINT_SOCKET
+#     value: unix:///run/spire/sockets/spire-agent.sock
