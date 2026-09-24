@@ -1,0 +1,18 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: gcp-spiffe-helper
+data:
+  entrypoint.sh: |
+    #!/bin/bash
+    DAEMON_MODE="-daemon-mode=false"
+    if [ -z "$PROJECT_NUMBER" ]; then echo "PROJECT_NUMBER undefined!"; exit 1; fi
+    if [ -z "$WORKLOAD_IDENTITY_POOL" ]; then echo "WORKLOAD_IDENTITY_POOL undefined!"; exit 1; fi
+    if [ -z "$WORKLOAD_PROVIDER_NAME" ]; then echo "WORKLOAD_PROVIDER_NAME undefined!"; exit 1; fi
+    if [ ! -z "$1" ]; then DAEMON_MODE="-daemon-mode=true"; fi
+    cat > /tmp/helper.conf <<EOF
+    agent_address = "/run/spire/sockets/spire-agent.sock"
+    jwt_svids = [{jwt_audience="https://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WORKLOAD_IDENTITY_POOL}/providers/$WORKLOAD_PROVIDER_NAME", jwt_svid_file_name="/var/run/secrets/gcp/token"}]
+    jwt_svid_file_mode = 0444
+    EOF
+    /spiffe-helper -config /tmp/helper.conf ${DAEMON_MODE}
