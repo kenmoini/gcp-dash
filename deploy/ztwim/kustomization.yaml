@@ -4,6 +4,7 @@ namespace: gcp-dash-ztwim
 resources:
   - ../kubernetes
   - route.yaml
+  - gcp-spiffe-helper.configmap.yaml
   # - gcp-secret.example.yaml
 
 patches:
