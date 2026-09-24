@@ -8,7 +8,6 @@ data:
 
     # Set/check needed variables
     DAEMON_MODE="-daemon-mode=false"
-    if [ -z "$GSA_ID" ]; then echo "GSA_ID undefined!"; exit 1; fi
     if [ -z "$PROJECT_NUMBER" ]; then echo "PROJECT_NUMBER undefined!"; exit 1; fi
     if [ -z "$WORKLOAD_IDENTITY_POOL" ]; then echo "WORKLOAD_IDENTITY_POOL undefined!"; exit 1; fi
     if [ -z "$WORKLOAD_PROVIDER_NAME" ]; then echo "WORKLOAD_PROVIDER_NAME undefined!"; exit 1; fi
@@ -17,6 +16,9 @@ data:
     if [ ! -z "$1" ]; then
       DAEMON_MODE="-daemon-mode=true"
     else
+      # We only need the Google Service Account ID initially
+      if [ -z "$GSA_ID" ]; then echo "GSA_ID undefined!"; exit 1; fi
+      
       # This file allows the exchanged token to be used for GCP service access
       cat > /var/run/secrets/gcp/key.json <<EOF
     {
