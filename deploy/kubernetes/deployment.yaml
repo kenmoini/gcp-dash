@@ -17,8 +17,6 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
       serviceAccountName: gcp-dash
       initContainers: []
       containers:
