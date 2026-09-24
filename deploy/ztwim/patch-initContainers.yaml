@@ -2,47 +2,93 @@
   path: /spec/template/spec/initContainers/-
   value:
     name: ztwim-init
-    image: ghcr.io/kenmoini/gcp-dash:latest
-    imagePullPolicy: Always
+    image: 'registry.redhat.io/zero-trust-workload-identity-manager/spiffe-helper-rhel9:v0.11.0-1787560110'
+    imagePullPolicy: IfNotPresent
+    command:
+      - /spiffeHelper/entrypoint.sh
     env:
-    - name: PROJECT_NUMBER
-      valueFrom:
-        secretKeyRef:
-          name: gcp-dash-config
-          key: PROJECT_NUMBER
-    - name: WORKLOAD_NAME
-      valueFrom:
-        secretKeyRef:
-          name: gcp-dash-config
-          key: WORKLOAD_NAME
-    - name: GSA_ID
-      valueFrom:
-        secretKeyRef:
-          name: gcp-dash-config
-          key: GSA_ID
-    - name: SPIFFE_ENDPOINT_SOCKET
-      value: unix:///run/spire/sockets/spire-agent.sock
+      - name: GSA_ID
+        valueFrom:
+          secretKeyRef:
+            name: gcp-dash-config
+            key: GSA_ID
+      - name: PROJECT_NUMBER
+        valueFrom:
+          secretKeyRef:
+            name: gcp-dash-config
+            key: PROJECT_NUMBER
+      - name: WORKLOAD_IDENTITY_POOL
+        valueFrom:
+          secretKeyRef:
+            name: gcp-dash-config
+            key: WORKLOAD_IDENTITY_POOL
+      - name: WORKLOAD_PROVIDER_NAME
+        valueFrom:
+          secretKeyRef:
+            name: gcp-dash-config
+            key: WORKLOAD_PROVIDER_NAME
+    securityContext:
+      capabilities:
+        drop:
+          - ALL
+      runAsUser: 65534
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
     volumeMounts:
       - name: gcp-ztwim-swap
         mountPath: /var/run/secrets/gcp
-        readOnly: false
       - name: spiffe-workload-api
-        mountPath: /run/spire/sockets
         readOnly: true
-    command:
-      - /bin/sh
-      - -c
-      - |
-        # set -x
-        echo "########### Initializing Token..."
-        ./get-spiffe-token.py -a https://iam.googleapis.com/projects/$(PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(WORKLOAD_NAME)/providers/$(WORKLOAD_NAME) -o /var/run/secrets/gcp/token
+        mountPath: /run/spire/sockets
+      - name: spiffe-helper
+        mountPath: /spiffeHelper
 
-        echo "########### Token initialized!"
-        echo "Token contents:"
-        ./decode-jwt.py -f /var/run/secrets/gcp/token
+# In case you want to debug things or do it without spiffe-helper, this is a Python example
+# - op: add
+#   path: /spec/template/spec/initContainers/-
+#   value:
+#     name: ztwim-init
+#     image: ghcr.io/kenmoini/gcp-dash:latest
+#     imagePullPolicy: Always
+#     env:
+#     - name: PROJECT_NUMBER
+#       valueFrom:
+#         secretKeyRef:
+#           name: gcp-dash-config
+#           key: PROJECT_NUMBER
+#     - name: WORKLOAD_NAME
+#       valueFrom:
+#         secretKeyRef:
+#           name: gcp-dash-config
+#           key: WORKLOAD_NAME
+#     - name: GSA_ID
+#       valueFrom:
+#         secretKeyRef:
+#           name: gcp-dash-config
+#           key: GSA_ID
+#     - name: SPIFFE_ENDPOINT_SOCKET
+#       value: unix:///run/spire/sockets/spire-agent.sock
+#     volumeMounts:
+#       - name: gcp-ztwim-swap
+#         mountPath: /var/run/secrets/gcp
+#         readOnly: false
+#       - name: spiffe-workload-api
+#         mountPath: /run/spire/sockets
+#         readOnly: true
+#     command:
+#       - /bin/sh
+#       - -c
+#       - |
+#         # set -x
+#         echo "########### Initializing Token..."
+#         ./get-spiffe-token.py -a https://iam.googleapis.com/projects/$(PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(WORKLOAD_NAME)/providers/$(WORKLOAD_NAME) -o /var/run/secrets/gcp/token
 
-        echo "########### Creating GCP Service Account JSON..."
-        cat > /var/run/secrets/gcp/key.json <<EOF
-        {"universe_domain": "googleapis.com", "type": "external_account", "audience": "//iam.googleapis.com/projects/$(PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(WORKLOAD_NAME)/providers/$(WORKLOAD_NAME)", "subject_token_type": "urn:ietf:params:oauth:token-type:jwt", "token_url": "https://sts.googleapis.com/v1/token", "credential_source": { "file": "/var/run/secrets/gcp/token", "format": { "type": "text" } }, "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$(GSA_ID):generateAccessToken"}
-        EOF
-        echo "########### GCP Service Account JSON created!"
+#         echo "########### Token initialized!"
+#         echo "Token contents:"
+#         ./decode-jwt.py -f /var/run/secrets/gcp/token
+
+#         echo "########### Creating GCP Service Account JSON..."
+#         cat > /var/run/secrets/gcp/key.json <<EOF
+#         {"universe_domain": "googleapis.com", "type": "external_account", "audience": "//iam.googleapis.com/projects/$(PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(WORKLOAD_NAME)/providers/$(WORKLOAD_NAME)", "subject_token_type": "urn:ietf:params:oauth:token-type:jwt", "token_url": "https://sts.googleapis.com/v1/token", "credential_source": { "file": "/var/run/secrets/gcp/token", "format": { "type": "text" } }, "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$(GSA_ID):generateAccessToken"}
+#         EOF
+#         echo "########### GCP Service Account JSON created!"
