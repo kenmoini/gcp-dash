@@ -1,3 +1,13 @@
+# ConfigMap with spiffe-helper entrypoint and config
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: spiffe-helper
+    configMap:
+      name: gcp-spiffe-helper
+      defaultMode: 493
+
+# SPIRE Socket
 - op: add
   path: /spec/template/spec/volumes/-
   value:
@@ -13,6 +23,7 @@
     name: gcp-ztwim-swap
     emptyDir: {}
 
+# Secrets needed to authenticate to GCP
 - op: add
   path: /spec/template/spec/volumes/-
   value:
