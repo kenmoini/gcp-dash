@@ -1,13 +1,16 @@
-- op: add
-  path: /spec/template/spec/containers/0/volumeMounts/-
-  value:
-    name: spiffe-workload-api
-    readOnly: true
-    mountPath: /run/spire/sockets
-
+# The shared path where ZTWIM provides credentials to the application
 - op: add
   path: /spec/template/spec/containers/0/volumeMounts/-
   value:
     name: gcp-ztwim-swap
     mountPath: /var/run/secrets/gcp
     readOnly: true # Main application only needs read access
+
+# This is only needed if your application is SPIRE-aware.
+# You can also use it for debugging in the application since the gcloud CLI is available in the container
+# - op: add
+#   path: /spec/template/spec/containers/0/volumeMounts/-
+#   value:
+#     name: spiffe-workload-api
+#     readOnly: true
+#     mountPath: /run/spire/sockets
