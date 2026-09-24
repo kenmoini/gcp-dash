@@ -2,58 +2,102 @@
   path: /spec/template/spec/containers/-
   value:
     name: ztwim-refresh
-    image: ghcr.io/kenmoini/gcp-dash:latest
-    imagePullPolicy: Always
+    image: 'registry.redhat.io/zero-trust-workload-identity-manager/spiffe-helper-rhel9:v0.11.0-1787560110'
+    imagePullPolicy: IfNotPresent
+    command:
+      - /spiffeHelper/entrypoint.sh
+    args:
+      - daemon
     env:
-    - name: PROJECT_NUMBER
-      valueFrom:
-        secretKeyRef:
-          name: gcp-dash-config
-          key: PROJECT_NUMBER
-    - name: WORKLOAD_NAME
-      valueFrom:
-        secretKeyRef:
-          name: gcp-dash-config
-          key: WORKLOAD_NAME
-    - name: GSA_ID
-      valueFrom:
-        secretKeyRef:
-          name: gcp-dash-config
-          key: GSA_ID
-    - name: SPIFFE_ENDPOINT_SOCKET
-      value: unix:///run/spire/sockets/spire-agent.sock
+      - name: PROJECT_NUMBER
+        valueFrom:
+          secretKeyRef:
+            name: gcp-dash-config
+            key: PROJECT_NUMBER
+      - name: WORKLOAD_IDENTITY_POOL
+        valueFrom:
+          secretKeyRef:
+            name: gcp-dash-config
+            key: WORKLOAD_IDENTITY_POOL
+      - name: WORKLOAD_PROVIDER_NAME
+        valueFrom:
+          secretKeyRef:
+            name: gcp-dash-config
+            key: WORKLOAD_PROVIDER_NAME
+    securityContext:
+      capabilities:
+        drop:
+          - ALL
+      runAsUser: 65534
+      runAsNonRoot: true
+      allowPrivilegeEscalation: false
     volumeMounts:
       - name: gcp-ztwim-swap
         mountPath: /var/run/secrets/gcp
-        readOnly: false
       - name: spiffe-workload-api
-        mountPath: /run/spire/sockets
         readOnly: true
-    command:
-      - /bin/sh
-      - -c
-      - |
+        mountPath: /run/spire/sockets
+      - name: spiffe-helper
+        mountPath: /spiffeHelper
+        readOnly: true
 
-        refreshToken() {
-          echo "########### Checking expiration..."
-          EXPIRATION=$(./decode-jwt.py -f /var/run/secrets/gcp/token -s exp)
-          CURRENT_TIME=$(date +%s)
-          TIME_LEFT=$((EXPIRATION - CURRENT_TIME))
-          echo "########### Time left until expiration: $TIME_LEFT seconds"
-          if [ "$TIME_LEFT" -lt 30 ]; then
-            echo "########### Refreshing Token..."
-            ./get-spiffe-token.py -a https://iam.googleapis.com/projects/$(PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(WORKLOAD_NAME)/providers/$(WORKLOAD_NAME) -o /var/run/secrets/gcp/token
-            echo "########### Token Refreshed!"
-          else
-            echo "########### Token is still valid. No refresh needed."
-          fi
-        }
-        mainExec() {
-          while true; do
-            sleep 10 # Check every 10 seconds
-            refreshToken
-          done
-        }
+# In case you want to debug, not use spiffe-helper, etc, this is a Python example
+# - op: add
+#   path: /spec/template/spec/containers/-
+#   value:
+#     name: ztwim-refresh
+#     image: ghcr.io/kenmoini/gcp-dash:latest
+#     imagePullPolicy: Always
+#     env:
+#     - name: PROJECT_NUMBER
+#       valueFrom:
+#         secretKeyRef:
+#           name: gcp-dash-config
+#           key: PROJECT_NUMBER
+#     - name: WORKLOAD_NAME
+#       valueFrom:
+#         secretKeyRef:
+#           name: gcp-dash-config
+#           key: WORKLOAD_NAME
+#     - name: GSA_ID
+#       valueFrom:
+#         secretKeyRef:
+#           name: gcp-dash-config
+#           key: GSA_ID
+#     - name: SPIFFE_ENDPOINT_SOCKET
+#       value: unix:///run/spire/sockets/spire-agent.sock
+#     volumeMounts:
+#       - name: gcp-ztwim-swap
+#         mountPath: /var/run/secrets/gcp
+#         readOnly: false
+#       - name: spiffe-workload-api
+#         mountPath: /run/spire/sockets
+#         readOnly: true
+#     command:
+#       - /bin/sh
+#       - -c
+#       - |
 
-        echo "########### Starting Refresh Sidecar..."
-        mainExec
+#         refreshToken() {
+#           echo "########### Checking expiration..."
+#           EXPIRATION=$(./decode-jwt.py -f /var/run/secrets/gcp/token -s exp)
+#           CURRENT_TIME=$(date +%s)
+#           TIME_LEFT=$((EXPIRATION - CURRENT_TIME))
+#           echo "########### Time left until expiration: $TIME_LEFT seconds"
+#           if [ "$TIME_LEFT" -lt 30 ]; then
+#             echo "########### Refreshing Token..."
+#             ./get-spiffe-token.py -a https://iam.googleapis.com/projects/$(PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(WORKLOAD_NAME)/providers/$(WORKLOAD_NAME) -o /var/run/secrets/gcp/token
+#             echo "########### Token Refreshed!"
+#           else
+#             echo "########### Token is still valid. No refresh needed."
+#           fi
+#         }
+#         mainExec() {
+#           while true; do
+#             sleep 10 # Check every 10 seconds
+#             refreshToken
+#           done
+#         }
+
+#         echo "########### Starting Refresh Sidecar..."
+#         mainExec
