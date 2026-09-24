@@ -1,6 +1,8 @@
 # gcp-dash
 
-Container runtime dashboard with health-probe controls and a GCP resource viewer. Runs on Red Hat UBI 10.
+> An intro to Zero Trust Workload Identity Management
+
+Container runtime dashboard with health-probe controls and a GCP resource viewer. Runs on Red Hat UBI 10.  Can be deployed with GKE with Workload Identity, K8s/OpenShift with Static Service Account Secrets, or with OpenShift ZTWIM to Google Cloud.
 
 ## What it does
 
