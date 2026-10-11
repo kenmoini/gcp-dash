@@ -26,7 +26,12 @@ patches:
       name: gcp-dash
     path: patch-initContainers.yaml
 
-  - target:
-      kind: Deployment
-      name: gcp-dash
-    path: patch-refreshSidecar.yaml
+  # A sidecar isn't really needed in modern Kubernetes
+  # The initContainer exchanges the SVID before the workload starts
+  # And it can keep running, like a sidecar
+  # So if your workload doesn't need the JWT/Cert before it starts you could just use the refreshSidecar
+  # One or the other, both are overkill.  If both are used, disable daemon mode and restartPolicy in the initContainer.
+  # - target:
+  #     kind: Deployment
+  #     name: gcp-dash
+  #   path: patch-refreshSidecar.yaml
