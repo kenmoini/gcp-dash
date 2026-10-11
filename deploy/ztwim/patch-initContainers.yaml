@@ -4,8 +4,12 @@
     name: ztwim-init
     image: 'registry.redhat.io/zero-trust-workload-identity-manager/spiffe-helper-rhel9:v0.11.0-1787560110'
     imagePullPolicy: IfNotPresent
+    # Setting restartPolicy to Always defines this as a native sidecar container
+    restartPolicy: Always
     command:
       - /spiffeHelper/entrypoint.sh
+    args:
+      - daemon
     env:
       - name: GSA_ID
         valueFrom:
