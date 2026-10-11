@@ -11,16 +11,16 @@ data:
     if [ -z "$PROJECT_NUMBER" ]; then echo "PROJECT_NUMBER undefined!"; exit 1; fi
     if [ -z "$WORKLOAD_IDENTITY_POOL" ]; then echo "WORKLOAD_IDENTITY_POOL undefined!"; exit 1; fi
     if [ -z "$WORKLOAD_PROVIDER_NAME" ]; then echo "WORKLOAD_PROVIDER_NAME undefined!"; exit 1; fi
+    if [ -z "$GSA_ID" ]; then echo "GSA_ID undefined!"; exit 1; fi
 
     # Daemon mode runs in the background and keeps the token exchange refreshed, use in the sidecar
     if [ ! -z "$1" ]; then
       DAEMON_MODE="-daemon-mode=true"
-    else
-      # We only need the Google Service Account ID initially
-      if [ -z "$GSA_ID" ]; then echo "GSA_ID undefined!"; exit 1; fi
-      
-      # This file allows the exchanged token to be used for GCP service access
-      cat > /var/run/secrets/gcp/key.json <<EOF
+    fi
+    
+    # This file allows the exchanged token to be used for GCP service access
+    # Ideally this is provided via a specially templated ExternalSecret
+    cat > /var/run/secrets/gcp/key.json <<EOF
     {
       "universe_domain": "googleapis.com",
       "type": "external_account",
@@ -34,7 +34,6 @@ data:
       "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${GSA_ID}:generateAccessToken"
     }
     EOF
-    fi
 
     # Create the spiffe-helper configuration dynamically from the environment variables
     cat > /tmp/helper.conf <<EOF
